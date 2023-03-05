@@ -1,7 +1,7 @@
 import csv
 import datetime
 
-from StockPrice import StockPrices
+from stock_price import StockPrices
 from constants import CSV_COLUMNS
 
 

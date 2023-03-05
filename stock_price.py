@@ -8,6 +8,11 @@ class Stock:
         self.api = yf.Ticker(ticker)
 
     def get_price_on_date(self, d):
+        """
+        Given a date, return the price on the given date
+        :param d: the date to find, should be string like "2022-02-06"
+        :return: the price on the given date
+        """
         year, month, day = d.split("-")
         start_date = datetime.datetime(int(year), int(month), int(day))
         end_date = start_date + datetime.timedelta(days=1)
@@ -15,6 +20,7 @@ class Stock:
         data = self.api.history(start=start_date.strftime("%Y-%m-%d"), end=end_date.strftime("%Y-%m-%d"))
         values = data.values
 
+        # Check to make sure value exists (i.e. on a business day)
         if len(values) == 0:
             # Increase until the next business day
             while len(values) == 0:
@@ -28,6 +34,16 @@ class Stock:
 
 class StockPrices(Stock):
     def __init__(self, ticker, start_date, end_date):
+        """
+        Get and store stock prices for a given date range
+        :param ticker: The ticker of the company
+        :param start_date: the start date of historical prices, can be a string like "2022-02-06" or a datetime
+        :param end_date: the end date of historical prices, can be a string like "2022-02-07" or a datetime
+
+        Example:
+        merck = StockPrices("MRK", "2021-02-06", "2021-02-18")
+        print(merck.get_price_on_date("2021-02-08"))
+        """
         super().__init__(ticker)
         self.ticker = ticker
         self.api = yf.Ticker(ticker)
@@ -44,10 +60,13 @@ class StockPrices(Stock):
             self.end_date = end_date
 
         self.prices = {}
+        self.__populate_prices()
 
-        self.populate_prices()
-
-    def populate_prices(self):
+    def __populate_prices(self):
+        """
+        Use the given date range to populate a dictionary of prices for each day in the range
+        Do this to make lookup of prices quick
+        """
         data = self.api.history(start=self.start_date.strftime("%Y-%m-%d"), end=self.end_date.strftime("%Y-%m-%d"))
 
         for index, row in data.iterrows():
@@ -56,9 +75,12 @@ class StockPrices(Stock):
 
             self.prices[date] = price
 
-        return self.prices
-
     def get_price_on_date(self, d):
+        """
+        Given a date, return the price on the given date
+        :param d: the date to find, should be string like "2022-02-06"
+        :return: the price on the given date
+        """
         if d in self.prices:
             return self.prices[d]
 
