@@ -6,7 +6,7 @@ import torch
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
 import scripts
 
-CSV_COLUMNS = {"INDEX": 0, "HEADLINE": 1, "DATE": 2, "TICKER": 3}
+CSV_COLUMNS = {"INDEX": 0, "HEADLINE": 1, "URL": 2, "Publisher": 3, "DATE": 4, "TICKER": 5}
 
 if __name__ == "__main__":
     CSV_FILE = 'raw_analyst_ratings.csv'
@@ -21,8 +21,10 @@ if __name__ == "__main__":
     tokenizer = AutoTokenizer.from_pretrained("ProsusAI/finbert")
     model = AutoModelForSequenceClassification.from_pretrained("ProsusAI/finbert")
 
+    HEADLINE_AMOUNT = 10
+
     # Turning the headlines into tokens to be inputted into model
-    inputs = tokenizer(headlines_list, padding=True, truncation=True, return_tensors='pt')
+    inputs = tokenizer(headlines_list[:HEADLINE_AMOUNT], padding=True, truncation=True, return_tensors='pt')
 
     # Inference
     outputs = model(**inputs)
