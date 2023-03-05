@@ -17,7 +17,7 @@ headlines_list = [row[CSV_COLUMNS["HEADLINE"]] for row in rows]
 tokenizer = AutoTokenizer.from_pretrained("ProsusAI/finbert")
 model = AutoModelForSequenceClassification.from_pretrained("ProsusAI/finbert")
 
-HEADLINE_AMOUNT = 100
+HEADLINE_AMOUNT = 500
 inputs = tokenizer(headlines_list[:HEADLINE_AMOUNT], padding=True, truncation=True, return_tensors='pt')
 outputs = model(**inputs)
 predictions = torch.nn.functional.softmax(outputs.logits, dim=-1)
@@ -54,7 +54,7 @@ clf.fit(X, y)
 # Predict
 #####
 
-inputs = tokenizer(headlines_list[101:200], padding=True, truncation=True, return_tensors='pt')
+inputs = tokenizer(headlines_list[HEADLINE_AMOUNT + 1:HEADLINE_AMOUNT + 100], padding=True, truncation=True, return_tensors='pt')
 outputs = model(**inputs)
 predictions = torch.nn.functional.softmax(outputs.logits, dim=-1)
 
@@ -66,7 +66,7 @@ for prediction in predictions:
 
 y_predictions = []
 
-for row in rows[101:200]:
+for row in rows[HEADLINE_AMOUNT + 1:HEADLINE_AMOUNT + 100]:
     date = row[CSV_COLUMNS['DATE']].split(" ")[0]
 
     price = stock.get_price_on_date(date)
