@@ -1,17 +1,21 @@
 import datetime
 import yfinance as yf
 
+import requests_cache
+
+session = requests_cache.CachedSession('yfinance.cache')
+session.headers['User-agent'] = 'my-program/1.0'
 
 class Stock:
     def __init__(self, ticker):
         self.ticker = ticker
-        self.api = yf.Ticker(ticker)
+        self.api = yf.Ticker(ticker, session=session)
 
     def get_price_on_date(self, d):
         """
         Given a date, return the price on the given date
         :param d: the date to find, should be string like "2022-02-06"
-        :return: the price on the given date
+        :return: the price on the given date in tuple form of (open price, close price)
         """
         year, month, day = d.split("-")
         start_date = datetime.datetime(int(year), int(month), int(day))
@@ -29,7 +33,7 @@ class Stock:
                 data = self.api.history(start=start_date.strftime("%Y-%m-%d"), end=end_date.strftime("%Y-%m-%d"))
                 values = data.values
 
-        return data['Close'].values[0]
+        return data['Open'].values[0], data['Close'].values[0]
 
 
 class StockPrices(Stock):
@@ -45,16 +49,13 @@ class StockPrices(Stock):
         print(merck.get_price_on_date("2021-02-08"))
         """
         super().__init__(ticker)
-        self.ticker = ticker
-        self.api = yf.Ticker(ticker)
 
-        if type(start_date) == 'str':
+        if isinstance(start_date, str):
             start_year, start_month, start_day = start_date.split("-")
             self.start_date = datetime.datetime(int(start_year), int(start_month), int(start_day))
 
             end_year, end_month, end_day = end_date.split("-")
             self.end_date = datetime.datetime(int(end_year), int(end_month), int(end_day))
-
         else:
             self.start_date = start_date
             self.end_date = end_date
@@ -70,7 +71,7 @@ class StockPrices(Stock):
         data = self.api.history(start=self.start_date.strftime("%Y-%m-%d"), end=self.end_date.strftime("%Y-%m-%d"))
 
         for index, row in data.iterrows():
-            price = row['Close']
+            price = (row['Open'], row['Close'])
             date = index.to_pydatetime().strftime("%Y-%m-%d")
 
             self.prices[date] = price
@@ -79,7 +80,7 @@ class StockPrices(Stock):
         """
         Given a date, return the price on the given date
         :param d: the date to find, should be string like "2022-02-06"
-        :return: the price on the given date
+        :return: the price on the given date in tuple form of (open price, close price)
         """
         if d in self.prices:
             return self.prices[d]
