@@ -50,7 +50,6 @@ def get_rows_from_ticker(ticker, file):
 
     return rows
 
-
 if __name__ == "__main__":
     CSV_FILE = 'raw_analyst_ratings.csv'
     ticker, num_articles = find_stock_most_headlines(CSV_FILE)
