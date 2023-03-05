@@ -56,7 +56,7 @@ if __name__ == "__main__":
     ticker, num_articles = find_stock_most_headlines(CSV_FILE)
 
     print(ticker + " had the most headlines with " + str(num_articles) + " headlines")
-    
+
     rows = get_rows_from_ticker(ticker, CSV_FILE)
 
     print(rows)
