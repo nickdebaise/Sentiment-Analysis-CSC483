@@ -1,4 +1,8 @@
 import csv
+import datetime
+
+from StockPrice import StockPrices
+from constants import CSV_COLUMNS
 
 
 def find_stock_most_headlines(file):
@@ -50,12 +54,41 @@ def get_rows_from_ticker(ticker, file):
 
     return rows
 
+
+def get_date_range_from_rows(rows):
+    """
+    Given rows from the analyst ratings, return the min and max date
+    :param rows: the rows from the CSV
+    :return: min and max date as a tuple
+    """
+
+    max_d = datetime.datetime(2008, 1, 1)  # Articles start at 2009
+    min_d = datetime.datetime(2022, 1, 1)  # Articles are not older than 2020
+
+    for row in rows:
+        year, month, day = row[CSV_COLUMNS['DATE']].split(" ")[0].split("-")
+        date = datetime.datetime(int(year), int(month), int(day))
+
+        if date < min_d:
+            min_d = date
+
+        if date > max_d:
+            max_d = date
+
+    return min_d, max_d
+
+
 if __name__ == "__main__":
     CSV_FILE = 'raw_analyst_ratings.csv'
-    ticker, num_articles = find_stock_most_headlines(CSV_FILE)
+    # ticker, num_articles = find_stock_most_headlines(CSV_FILE)
+    # print(ticker + " had the most headlines with " + str(num_articles) + " headlines")
 
-    print(ticker + " had the most headlines with " + str(num_articles) + " headlines")
-
+    ticker = "MRK"
     rows = get_rows_from_ticker(ticker, CSV_FILE)
+    # print(rows)
 
-    print(rows)
+    min_date, max_date = get_date_range_from_rows(rows)
+    print(min_date, max_date)
+
+    stock = StockPrices(ticker, min_date, max_date)
+    print(stock.prices)

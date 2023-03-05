@@ -3,7 +3,6 @@ import yfinance as yf
 
 
 class Stock:
-
     def __init__(self, ticker):
         self.ticker = ticker
         self.api = yf.Ticker(ticker)
@@ -33,11 +32,16 @@ class StockPrices(Stock):
         self.ticker = ticker
         self.api = yf.Ticker(ticker)
 
-        start_year, start_month, start_day = start_date.split("-")
-        self.start_date = datetime.datetime(int(start_year), int(start_month), int(start_day))
+        if type(start_date) == 'str':
+            start_year, start_month, start_day = start_date.split("-")
+            self.start_date = datetime.datetime(int(start_year), int(start_month), int(start_day))
 
-        end_year, end_month, end_day = end_date.split("-")
-        self.end_date = datetime.datetime(int(end_year), int(end_month), int(end_day))
+            end_year, end_month, end_day = end_date.split("-")
+            self.end_date = datetime.datetime(int(end_year), int(end_month), int(end_day))
+
+        else:
+            self.start_date = start_date
+            self.end_date = end_date
 
         self.prices = {}
 
