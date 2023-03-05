@@ -9,7 +9,7 @@ def find_stock_most_headlines(file):
     """
     stocks = {}
 
-    with open(file, newline='') as csvfile:
+    with open(file, newline='', encoding="utf8") as csvfile:
         reader = csv.reader(csvfile, delimiter=',')
         for row in reader:
             ticker = row[-1]
@@ -41,7 +41,7 @@ def get_rows_from_ticker(ticker, file):
 
     rows = []
 
-    with open(file, newline='') as csvfile:
+    with open(file, newline='', encoding="utf8") as csvfile:
         reader = csv.reader(csvfile, delimiter=',')
         for row in reader:
             row_ticker = row[-1]
