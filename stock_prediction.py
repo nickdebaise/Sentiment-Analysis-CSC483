@@ -2,6 +2,7 @@ import numpy as np
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVC
+from sklearn.naive_bayes import GaussianNB
 
 import torch
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
@@ -46,7 +47,7 @@ for row in rows[:HEADLINE_AMOUNT]:
 X = np.array(X_predictions)
 y = np.array(y_predictions)
 
-clf = make_pipeline(StandardScaler(), SVC(gamma='auto'))
+clf = make_pipeline(StandardScaler(), GaussianNB())
 clf.fit(X, y)
 
 
