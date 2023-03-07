@@ -49,6 +49,7 @@ class Predictor:
 
         X_predictions = []
 
+        print("Getting Predictions")
         for prediction in predictions:
             X_predictions.append(prediction.cpu().detach().numpy())
 
@@ -94,7 +95,7 @@ class Predictor:
 # PREDICTOR CONFIGURATION ###############################################################
 
 ### Change company here
-ticker = "GOOGL"
+ticker = "MS"
 CSV_FILE = "raw_analyst_ratings.csv"
 rows = scripts.get_rows_from_ticker(ticker, CSV_FILE)
 min_date, max_date = scripts.get_date_range_from_rows(rows)
@@ -109,9 +110,8 @@ predictor = Predictor(stock)
 X = predictor.get_and_clean_predictions(headlines_list[:HEADLINE_AMOUNT])
 Y = predictor.get_stock_buy_sell(rows[:HEADLINE_AMOUNT])
 
-
 ### Change Model Here
-predictor.train(X, Y, SVC())
+predictor.train(X, Y, GaussianNB())
 
 #####
 # Predict
@@ -130,4 +130,3 @@ print("Accuracy: ", accuracy_score(predicted, Y_predictions))
 print("Precision: ", precision_score(predicted, Y_predictions))
 print("Recall: ", recall_score(predicted, Y_predictions))
 print("F Score: ", f1_score(predicted, Y_predictions))
-

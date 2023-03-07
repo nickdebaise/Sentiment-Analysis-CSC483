@@ -22,16 +22,16 @@ The application outputs the models' evaluation based on how successful your mode
 ### 4. File Overview
 
 #### stock_prediction.py
-The main file in the project. Configurations can be found in this file
+This file is responsible for training and testing the neural models behind making the actual predictions. This is the main file of the project and this is where configurations can be found.
 
 #### stock_price.py
-Stores internal models representing stocks and the information surrounding them. These models use the Yahoo Finance API to get ticker information about a given stock and stores it.
+Stores internal models needed to work with stocks and containing the information surrounding them. Internalized, they make use of Yahoo Finance API to get ticker information about a given stock and stores it.
 
 #### constants.py
 Contains constants for project.
 
 #### mock_finBERT.py
-Mini implementation of Hugging Face's FinBert model on. Classifies headline data into positive,negative, and neutral states.
+Mini implementation of Hugging Face's FinBert model which classifies headline data into positive, negative, and neutral states.
 
 <h4 id="corpus"> raw_analyst_ratings.txt </h4> 
 
@@ -48,15 +48,15 @@ Entries/Columns required to run program:
 
 
 #### scripts.py
-Useful functions and tools used all through the program are stored here. 
+Bucket of useful functions which are used all throughout the project. 
 
 ### 5. Program Configuration
 Configuration parameters for the predictor can be found within stock_prediction.py. Main neural structure and learning phases can be found and edited here as well
 
 ### 6. About Project
-This group project expands upon the concepts discussed in a Natural Language Processing Course and applies them to the domain of Economics.
+This group project expands upon the concepts discussed in Natural Language Processing Courses and applies them to the domain of Economics.
 
-#### Contributors to building project
+#### Contributors to building this project
 
 - Nicholas DeBaise
 - Hawkeye Nadel
