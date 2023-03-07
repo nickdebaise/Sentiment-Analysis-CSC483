@@ -91,6 +91,8 @@ class Predictor:
         return self.clf.predict(X)
 
 
+# PREDICTOR CONFIGURATION ###############################################################
+
 ### Change company here
 ticker = "GOOGL"
 CSV_FILE = "raw_analyst_ratings.csv"
