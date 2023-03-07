@@ -2,7 +2,7 @@ from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVC
 from sklearn.naive_bayes import GaussianNB
-from sklearn.metrics import recall_score, f1_score, precision_score
+from sklearn.metrics import recall_score, f1_score, precision_score, accuracy_score
 
 import torch
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
@@ -90,12 +90,16 @@ class Predictor:
         """
         return self.clf.predict(X)
 
+
+### Change company here
 ticker = "GOOGL"
 CSV_FILE = "raw_analyst_ratings.csv"
 rows = scripts.get_rows_from_ticker(ticker, CSV_FILE)
 min_date, max_date = scripts.get_date_range_from_rows(rows)
 stock = StockPrices(ticker, min_date, max_date)
 headlines_list = [row[CSV_COLUMNS["HEADLINE"]] for row in rows]
+
+### Number of training examples
 HEADLINE_AMOUNT = 500
 
 predictor = Predictor(stock)
@@ -103,21 +107,25 @@ predictor = Predictor(stock)
 X = predictor.get_and_clean_predictions(headlines_list[:HEADLINE_AMOUNT])
 Y = predictor.get_stock_buy_sell(rows[:HEADLINE_AMOUNT])
 
-predictor.train(X, Y, GaussianNB())
+
+### Change Model Here
+predictor.train(X, Y, SVC())
 
 #####
 # Predict
 #####
 
-NUM_TRAINING_EXAMPLES = 100
-prediction_rows = rows[HEADLINE_AMOUNT + 1:HEADLINE_AMOUNT + NUM_TRAINING_EXAMPLES]
-prediction_headlines = headlines_list[HEADLINE_AMOUNT + 1:HEADLINE_AMOUNT + NUM_TRAINING_EXAMPLES]
+### Number of testing examples
+NUM_TEST_EXAMPLES = 100
+prediction_rows = rows[HEADLINE_AMOUNT + 1:HEADLINE_AMOUNT + NUM_TEST_EXAMPLES]
+prediction_headlines = headlines_list[HEADLINE_AMOUNT + 1:HEADLINE_AMOUNT + NUM_TEST_EXAMPLES]
 
 X_predictions = predictor.get_and_clean_predictions(prediction_headlines)
 Y_predictions = predictor.get_stock_buy_sell(prediction_rows)
 
 predicted = predictor.predict(X_predictions)
-print(predicted)
-print(Y_predictions)
+print("Accuracy: ", accuracy_score(predicted, Y_predictions))
+print("Precision: ", precision_score(predicted, Y_predictions))
+print("Recall: ", recall_score(predicted, Y_predictions))
+print("F Score: ", f1_score(predicted, Y_predictions))
 
-print(precision_score(predicted, Y_predictions), recall_score(predicted, Y_predictions), f1_score(predicted, Y_predictions))
