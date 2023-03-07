@@ -3,14 +3,21 @@
 ### 1. Background and Goals
 Our project's goal is to perform a sentiment analysis on news headlines pertaining to specific stocks. From this, we will use these sentiments to evaluate and predict whether a stock should be bought or sold on that day. We're hoping to learn more about the different ways to apply BERT models and investigate what it looks like to build an application that attempts to predict real-world movements based on pre-trained models. The task of predicting share prices is ultimately much more complex than the project itself, however we focus on extracting the non-quantifiable information within the news headlines and seeing how they correlate (if at all) to the real markets.
 
-### 2.  Prerequisites to running
+### 2.  Prerequisites to Running
 If external corpus is wanted, override the raw_analyst_ratings.txt file in the main directory and follow the format specified [`below`](#corpus).
 
-
-### 3. How to install and run
+### 3. How to Install and Run
 
     pip install -r requirements.txt 
     python3 stock_prediciton.py
+
+#### Understanding Output
+The application outputs the models' evaluation based on how successful your model was in predicting the stocks' movement. The evaluation consist of calculating the models: 
+
+- Accuracy
+- Precision
+- Recall
+- F-score
 
 ### 4. File Overview
 
