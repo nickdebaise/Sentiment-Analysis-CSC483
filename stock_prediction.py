@@ -17,25 +17,36 @@ from constants import CSV_COLUMNS
 from stock_price import StockPrices
 
 
+def chunk_data(data, chunk_size):
+    """
+    Split the given data in n chunks of chunk_size size
+    :param data: the list to split
+    :param chunk_size: how many items in each chunk
+    :return: a new list of 2 dimensions with chunks of original data
+    """
+    chunks = []
+    for i in range(0, len(data), chunk_size):
+        chunks.append(data[i:i + chunk_size])
+    return chunks
+
+
 def getClassFromPrice(open_price, close_price, plus_minus_range=0):
     """
     Return the class corresponding to the open and closing prices
 
-    BUY : 2
-    HOLD : 1
-    SELL : 0
+    if plus_minus_range = 0, return 1 or 0 based on the opening/closing price
 
     :param open_price: the open price of the day
     :param close_price: the close price of the day
     :param plus_minus_range: the range for holding
     :return: 2, 1, or 0 depending on the values
     """
+    if plus_minus_range == 0:
+        return 1 if close_price > open_price else 0
+
     # buy if close_price is plus_minus_range greater than open_price
     # sell if close_price is plus_minus_range less than open_price
     # hold else
-
-    if plus_minus_range == 0:
-        return 1 if close_price > open_price else 0
 
     if close_price > open_price + plus_minus_range:
         return 2
@@ -79,13 +90,15 @@ class Predictor:
         :return: a list of sentiments (positive, negative, neutral) corresponding to
         each headline in the given list i.e. [[0.5, 0.02, 0.7], ...]
         """
-        scores = self.get_sentiment_scores(headlines)
 
+        chunked_data = chunk_data(headlines, 200)
         X = []
-        print("Getting Predictions")
 
-        for sentiment_score in scores:
-            X.append(sentiment_score.cpu().detach().numpy())
+        for chunk in chunked_data:
+            scores = self.get_sentiment_scores(chunk)
+
+            for sentiment_score in scores:
+                X.append(sentiment_score.cpu().detach().numpy())
 
         return X
 
@@ -141,7 +154,7 @@ if __name__ == "__main__":
     headlines_list = [row[CSV_COLUMNS["HEADLINE"]] for row in rows]
 
     # Number of training examples
-    HEADLINE_AMOUNT = 800
+    HEADLINE_AMOUNT = round(len(headlines_list) * 0.7)
 
     predictor = Predictor(stock)
 
@@ -156,16 +169,16 @@ if __name__ == "__main__":
     #####
 
     # Number of testing examples
-    NUM_TEST_EXAMPLES = 100
+    NUM_TEST_EXAMPLES = round(len(headlines_list) * 0.2)
 
     prediction_rows = rows[HEADLINE_AMOUNT:HEADLINE_AMOUNT + NUM_TEST_EXAMPLES]
     prediction_headlines = headlines_list[HEADLINE_AMOUNT:HEADLINE_AMOUNT + NUM_TEST_EXAMPLES]
 
     X_predictions = predictor.get_and_clean_predictions(prediction_headlines)
-    Y_predictions = predictor.get_stock_buy_sell(prediction_rows)
+    Y_actual = predictor.get_stock_buy_sell(prediction_rows)
 
-    predicted = predictor.predict(X_predictions)
-    print("Accuracy: ", accuracy_score(predicted, Y_predictions))
-    print("Precision: ", precision_score(predicted, Y_predictions))
-    print("Recall: ", recall_score(predicted, Y_predictions))
-    print("F Score: ", f1_score(predicted, Y_predictions))
+    Y_predicted = predictor.predict(X_predictions)
+    print("Accuracy: ", accuracy_score(Y_predicted, Y_actual))
+    print("Precision: ", precision_score(Y_predicted, Y_actual))
+    print("Recall: ", recall_score(Y_predicted, Y_actual))
+    print("F Score: ", f1_score(Y_predicted, Y_actual))
