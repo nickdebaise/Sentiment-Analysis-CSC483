@@ -11,6 +11,34 @@ from constants import CSV_COLUMNS
 from stock_price import StockPrices
 
 
+def getClassFromPrice(open_price, close_price, plus_minus_range=0):
+    """
+    Return the class corresponding to the open and closing prices
+
+    BUY : 2
+    HOLD : 1
+    SELL : 0
+
+    :param open_price: the open price of the day
+    :param close_price: the close price of the day
+    :param plus_minus_range: the range for holding
+    :return: 2, 1, or 0 depending on the values
+    """
+    # buy if close_price is plus_minus_range greater than open_price
+    # sell if close_price is plus_minus_range less than open_price
+    # hold else
+
+    if plus_minus_range == 0:
+        return 1 if close_price > open_price else 0
+
+    if close_price > open_price + plus_minus_range:
+        return 2
+    elif close_price + plus_minus_range < open_price:
+        return 0
+    else:
+        return 1
+
+
 class Predictor:
     def __init__(self, stock):
         """
@@ -25,7 +53,7 @@ class Predictor:
         self.tokenizer = AutoTokenizer.from_pretrained("ProsusAI/finbert")
         self.analyzer = AutoModelForSequenceClassification.from_pretrained("ProsusAI/finbert")
 
-    def get_predictions(self, headlines):
+    def get_sentiment_scores(self, headlines):
         """
         Given a list of headlines, return the sentiment score of each headline as tensors
         :param headlines: a list of headlines (i.e. ["Google rallied today", ...]
@@ -33,9 +61,9 @@ class Predictor:
         """
         inputs = self.tokenizer(headlines, padding=True, truncation=True, return_tensors='pt')
         outputs = self.analyzer(**inputs)
-        predictions = torch.nn.functional.softmax(outputs.logits, dim=-1)
+        sentiment_scores = torch.nn.functional.softmax(outputs.logits, dim=-1)
 
-        return predictions
+        return sentiment_scores
 
     def get_and_clean_predictions(self, headlines):
         """
@@ -45,14 +73,14 @@ class Predictor:
         :return: a list of sentiments (positive, negative, neutral) corresponding to
         each headline in the given list i.e. [[0.5, 0.02, 0.7], ...]
         """
-        predictions = self.get_predictions(headlines)
+        scores = self.get_sentiment_scores(headlines)
 
-        X_predictions = []
+        X = []
 
-        for prediction in predictions:
-            X_predictions.append(prediction.cpu().detach().numpy())
+        for sentiment_score in scores:
+            X.append(sentiment_score.cpu().detach().numpy())
 
-        return X_predictions
+        return X
 
     def get_stock_buy_sell(self, rows):
         """
@@ -62,14 +90,14 @@ class Predictor:
         :param rows: the rows from a CSV file (given from scripts.get_rows_from_ticker())
         :return: list of values detailing stock price rising/falling i.e. [1, 1, 0, 0, 0, 1, 1, ...]
         """
-        Y_predictions = []
+        Y_actual = []
 
         for row in rows:
             date = row[CSV_COLUMNS['DATE']].split(" ")[0]
             price = self.stock.get_price_on_date(date)
-            Y_predictions.append(1 if price[1] - price[0] > 0 else 0)
+            Y_actual.append(getClassFromPrice(price[0], price[1]))
 
-        return Y_predictions
+        return Y_actual
 
     def train(self, X, Y, model):
         """
@@ -100,23 +128,22 @@ stock = StockPrices(ticker, min_date, max_date)
 headlines_list = [row[CSV_COLUMNS["HEADLINE"]] for row in rows]
 
 ### Number of training examples
-HEADLINE_AMOUNT = 500
+HEADLINE_AMOUNT = 700
 
 predictor = Predictor(stock)
 
 X = predictor.get_and_clean_predictions(headlines_list[:HEADLINE_AMOUNT])
 Y = predictor.get_stock_buy_sell(rows[:HEADLINE_AMOUNT])
 
-
 ### Change Model Here
-predictor.train(X, Y, SVC())
+predictor.train(X, Y, GaussianNB())
 
 #####
 # Predict
 #####
 
 ### Number of testing examples
-NUM_TEST_EXAMPLES = 100
+NUM_TEST_EXAMPLES = 400
 prediction_rows = rows[HEADLINE_AMOUNT + 1:HEADLINE_AMOUNT + NUM_TEST_EXAMPLES]
 prediction_headlines = headlines_list[HEADLINE_AMOUNT + 1:HEADLINE_AMOUNT + NUM_TEST_EXAMPLES]
 
@@ -128,4 +155,3 @@ print("Accuracy: ", accuracy_score(predicted, Y_predictions))
 print("Precision: ", precision_score(predicted, Y_predictions))
 print("Recall: ", recall_score(predicted, Y_predictions))
 print("F Score: ", f1_score(predicted, Y_predictions))
-
