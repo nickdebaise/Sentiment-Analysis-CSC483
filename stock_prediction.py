@@ -76,10 +76,11 @@ class Predictor:
         scores = self.get_sentiment_scores(headlines)
 
         X = []
+        print("Getting Predictions")
 
         for sentiment_score in scores:
             X.append(sentiment_score.cpu().detach().numpy())
-
+            
         return X
 
     def get_stock_buy_sell(self, rows):
@@ -119,8 +120,10 @@ class Predictor:
         return self.clf.predict(X)
 
 
+# PREDICTOR CONFIGURATION ###############################################################
+
 ### Change company here
-ticker = "GOOGL"
+ticker = "MS"
 CSV_FILE = "raw_analyst_ratings.csv"
 rows = scripts.get_rows_from_ticker(ticker, CSV_FILE)
 min_date, max_date = scripts.get_date_range_from_rows(rows)
