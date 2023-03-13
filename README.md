@@ -9,7 +9,7 @@ If external corpus is wanted, override the raw_analyst_ratings.txt file in the m
 ### 3. How to Install and Run
 
     pip install -r requirements.txt 
-    python3 stock_prediciton.py
+    python3 stock_prediction.py
 
 #### Understanding Output
 The application outputs the models' evaluation based on how successful your model was in predicting the stocks' movement. The evaluation consist of calculating the models: 
