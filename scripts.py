@@ -1,3 +1,6 @@
+"""
+This file contains scripts that are commonly used to handle data from the data source (CSV file)
+"""
 import csv
 import datetime
 
