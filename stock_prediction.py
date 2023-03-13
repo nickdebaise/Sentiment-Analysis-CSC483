@@ -80,7 +80,7 @@ class Predictor:
 
         for sentiment_score in scores:
             X.append(sentiment_score.cpu().detach().numpy())
-            
+
         return X
 
     def get_stock_buy_sell(self, rows):
