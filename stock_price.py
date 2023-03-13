@@ -1,3 +1,6 @@
+"""
+This file contains two classes that help model a Stock and Stock Prices pertaining to a given stock
+"""
 import datetime
 import yfinance as yf
 

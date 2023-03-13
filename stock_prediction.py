@@ -1,3 +1,9 @@
+"""
+This file contains a class that is used to predict stock movements given news headlines
+
+Honor Code: I affirm I have carried out the Union College Honor Code
+"""
+
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVC
@@ -120,41 +126,46 @@ class Predictor:
         return self.clf.predict(X)
 
 
-# PREDICTOR CONFIGURATION ###############################################################
+if __name__ == "__main__":
+    # PREDICTOR CONFIGURATION ###############################################################
 
-### Change company here
-ticker = "MS"
-CSV_FILE = "raw_analyst_ratings.csv"
-rows = scripts.get_rows_from_ticker(ticker, CSV_FILE)
-min_date, max_date = scripts.get_date_range_from_rows(rows)
-stock = StockPrices(ticker, min_date, max_date)
-headlines_list = [row[CSV_COLUMNS["HEADLINE"]] for row in rows]
+    CSV_FILE = "raw_analyst_ratings.csv"
 
-### Number of training examples
-HEADLINE_AMOUNT = 700
+    # Change company here
+    ticker = "GOOGL"
 
-predictor = Predictor(stock)
+    rows = scripts.get_rows_from_ticker(ticker, CSV_FILE)
+    min_date, max_date = scripts.get_date_range_from_rows(rows)
 
-X = predictor.get_and_clean_predictions(headlines_list[:HEADLINE_AMOUNT])
-Y = predictor.get_stock_buy_sell(rows[:HEADLINE_AMOUNT])
+    stock = StockPrices(ticker, min_date, max_date)
+    headlines_list = [row[CSV_COLUMNS["HEADLINE"]] for row in rows]
 
-### Change Model Here
-predictor.train(X, Y, GaussianNB())
+    # Number of training examples
+    HEADLINE_AMOUNT = 800
 
-#####
-# Predict
-#####
+    predictor = Predictor(stock)
 
-### Number of testing examples
-NUM_TEST_EXAMPLES = 400
-prediction_rows = rows[HEADLINE_AMOUNT + 1:HEADLINE_AMOUNT + NUM_TEST_EXAMPLES]
-prediction_headlines = headlines_list[HEADLINE_AMOUNT + 1:HEADLINE_AMOUNT + NUM_TEST_EXAMPLES]
+    X = predictor.get_and_clean_predictions(headlines_list[:HEADLINE_AMOUNT])
+    Y = predictor.get_stock_buy_sell(rows[:HEADLINE_AMOUNT])
 
-X_predictions = predictor.get_and_clean_predictions(prediction_headlines)
-Y_predictions = predictor.get_stock_buy_sell(prediction_rows)
+    # Change Model Here
+    predictor.train(X, Y, GaussianNB())
 
-predicted = predictor.predict(X_predictions)
-print("Accuracy: ", accuracy_score(predicted, Y_predictions))
-print("Precision: ", precision_score(predicted, Y_predictions))
-print("Recall: ", recall_score(predicted, Y_predictions))
-print("F Score: ", f1_score(predicted, Y_predictions))
+    #####
+    # Predict
+    #####
+
+    # Number of testing examples
+    NUM_TEST_EXAMPLES = 100
+
+    prediction_rows = rows[HEADLINE_AMOUNT:HEADLINE_AMOUNT + NUM_TEST_EXAMPLES]
+    prediction_headlines = headlines_list[HEADLINE_AMOUNT:HEADLINE_AMOUNT + NUM_TEST_EXAMPLES]
+
+    X_predictions = predictor.get_and_clean_predictions(prediction_headlines)
+    Y_predictions = predictor.get_stock_buy_sell(prediction_rows)
+
+    predicted = predictor.predict(X_predictions)
+    print("Accuracy: ", accuracy_score(predicted, Y_predictions))
+    print("Precision: ", precision_score(predicted, Y_predictions))
+    print("Recall: ", recall_score(predicted, Y_predictions))
+    print("F Score: ", f1_score(predicted, Y_predictions))
