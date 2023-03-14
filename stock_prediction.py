@@ -16,6 +16,8 @@ import scripts
 from constants import CSV_COLUMNS
 from stock_price import StockPrices
 
+from tqdm import tqdm
+
 
 def chunk_data(data, chunk_size):
     """
@@ -94,10 +96,11 @@ class Predictor:
         chunked_data = chunk_data(headlines, 200)
         X = []
 
+        print("Extracting Sentiments from Articles")
         for chunk in chunked_data:
             scores = self.get_sentiment_scores(chunk)
 
-            for sentiment_score in scores:
+            for sentiment_score in tqdm(scores, desc="Sentiments in Chunk"):
                 X.append(sentiment_score.cpu().detach().numpy())
 
         return X
@@ -112,7 +115,7 @@ class Predictor:
         """
         Y_actual = []
 
-        for row in rows:
+        for row in tqdm(rows, desc="Parsing Historical Data"):
             date = row[CSV_COLUMNS['DATE']].split(" ")[0]
             price = self.stock.get_price_on_date(date)
             Y_actual.append(getClassFromPrice(price[0], price[1]))
@@ -147,16 +150,23 @@ if __name__ == "__main__":
     # Change company here
     ticker = "GOOGL"
 
+    print("\n############## Preparing Data ##############\n")
+
     rows = scripts.get_rows_from_ticker(ticker, CSV_FILE)
     min_date, max_date = scripts.get_date_range_from_rows(rows)
 
+    print("Getting Stock Historical Data")
     stock = StockPrices(ticker, min_date, max_date)
+
+    print("Extracting Stock Headlines from Corpus")
     headlines_list = [row[CSV_COLUMNS["HEADLINE"]] for row in rows]
 
     # Number of training examples
     HEADLINE_AMOUNT = round(len(headlines_list) * 0.7)
 
     predictor = Predictor(stock)
+
+    print("\n############## Training ##############\n")
 
     X = predictor.get_and_clean_predictions(headlines_list[:HEADLINE_AMOUNT])
     Y = predictor.get_stock_buy_sell(rows[:HEADLINE_AMOUNT])
@@ -171,6 +181,8 @@ if __name__ == "__main__":
     # Number of testing examples
     NUM_TEST_EXAMPLES = round(len(headlines_list) * 0.2)
 
+    print("\n############## Testing ##############\n")
+
     prediction_rows = rows[HEADLINE_AMOUNT:HEADLINE_AMOUNT + NUM_TEST_EXAMPLES]
     prediction_headlines = headlines_list[HEADLINE_AMOUNT:HEADLINE_AMOUNT + NUM_TEST_EXAMPLES]
 
@@ -178,6 +190,9 @@ if __name__ == "__main__":
     Y_actual = predictor.get_stock_buy_sell(prediction_rows)
 
     Y_predicted = predictor.predict(X_predictions)
+
+    print("\n############## Evaluation ##############\n")
+
     print("Accuracy: ", accuracy_score(Y_predicted, Y_actual))
     print("Precision: ", precision_score(Y_predicted, Y_actual))
     print("Recall: ", recall_score(Y_predicted, Y_actual))

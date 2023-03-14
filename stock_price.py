@@ -24,7 +24,7 @@ class Stock:
         start_date = datetime.datetime(int(year), int(month), int(day))
         end_date = start_date + datetime.timedelta(days=1)
 
-        data = self.api.history(start=start_date.strftime("%Y-%m-%d"), end=end_date.strftime("%Y-%m-%d"))
+        data = self.api.history(start=start_date.strftime("%Y-%m-%d"), end=end_date.strftime("%Y-%m-%d"), debug=False)
         values = data.values
 
         # Check to make sure value exists (i.e. on a business day)
@@ -33,7 +33,7 @@ class Stock:
             while len(values) == 0:
                 start_date = start_date + datetime.timedelta(days=1)
                 end_date = start_date + datetime.timedelta(days=1)
-                data = self.api.history(start=start_date.strftime("%Y-%m-%d"), end=end_date.strftime("%Y-%m-%d"))
+                data = self.api.history(start=start_date.strftime("%Y-%m-%d"), end=end_date.strftime("%Y-%m-%d"), debug=False)
                 values = data.values
 
         return data['Open'].values[0], data['Close'].values[0]
