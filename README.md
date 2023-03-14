@@ -4,7 +4,9 @@
 Our project's goal is to perform a sentiment analysis on news headlines pertaining to specific stocks. From this, we will use these sentiments to evaluate and predict whether a stock should be bought or sold on that day. We're hoping to learn more about the different ways to apply BERT models and investigate what it looks like to build an application that attempts to predict real-world movements based on pre-trained models. The task of predicting share prices is ultimately much more complex than the project itself, however we focus on extracting the non-quantifiable information within the news headlines and seeing how they correlate (if at all) to the real markets.
 
 ### 2.  Prerequisites to Running
-If external corpus is wanted, override the raw_analyst_ratings.txt file in the main directory and follow the format specified [`below`](#corpus).
+If external corpus is wanted, override the raw_analyst_ratings.csv file in the main directory and follow the format specified [`below`](#corpus).
+
+The corpus can be downloaded from [kaggle](https://www.kaggle.com/datasets/miguelaenlle/massive-stock-news-analysis-db-for-nlpbacktests). The corpus used in the project comes from the raw_analyst_ratings.csv file in Kaggle.
 
 ### 3. How to Install and Run
 
@@ -33,7 +35,7 @@ Contains constants for project.
 #### mock_finBERT.py
 Mini implementation of Hugging Face's FinBert model which classifies headline data into positive, negative, and neutral states.
 
-<h4 id="corpus"> raw_analyst_ratings.txt </h4> 
+<h4 id="corpus"> raw_analyst_ratings.csv </h4> 
 
 This is the location of the corpus needed to train the classifiers within the predictor.
 If external / different corpus is wanted, the CSV format must correspond to the CSV_COLUMN constant within constants.py.
