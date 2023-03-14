@@ -3,7 +3,7 @@ This file contains a class that is used to predict stock movements given news he
 
 Honor Code: I affirm I have carried out the Union College Honor Code
 """
-
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVC
@@ -65,7 +65,7 @@ class Predictor:
         It also:
             - Trains a given model given X and Y values
             - Predicts classifier outputs given X values
-        :param stock: The stock that the predictor is working with
+        :param stock: The stock that the RF_predictor is working with
         """
         self.clf = None
         self.stock = stock
@@ -148,7 +148,7 @@ if __name__ == "__main__":
     CSV_FILE = "raw_analyst_ratings.csv"
 
     # Change company here
-    ticker = "GOOGL"
+    ticker = "MRK"
 
     print("\n############## Preparing Data ##############\n")
 
@@ -164,15 +164,21 @@ if __name__ == "__main__":
     # Number of training examples
     HEADLINE_AMOUNT = round(len(headlines_list) * 0.7)
 
-    predictor = Predictor(stock)
+    print("# of training data: ", HEADLINE_AMOUNT)
 
     print("\n############## Training ##############\n")
 
-    X = predictor.get_and_clean_predictions(headlines_list[:HEADLINE_AMOUNT])
-    Y = predictor.get_stock_buy_sell(rows[:HEADLINE_AMOUNT])
+    RF_predictor = Predictor(stock)
+    SVM_predictor = Predictor(stock)
+    NB_predictor = Predictor(stock)
+
+    X = RF_predictor.get_and_clean_predictions(headlines_list[:HEADLINE_AMOUNT])
+    Y = RF_predictor.get_stock_buy_sell(rows[:HEADLINE_AMOUNT])
 
     # Change Model Here
-    predictor.train(X, Y, GaussianNB())
+    RF_predictor.train(X, Y, RandomForestClassifier())
+    SVM_predictor.train(X, Y, SVC())
+    NB_predictor.train(X, Y, GaussianNB())
 
     #####
     # Predict
@@ -180,20 +186,37 @@ if __name__ == "__main__":
 
     # Number of testing examples
     NUM_TEST_EXAMPLES = round(len(headlines_list) * 0.2)
+    print("# of test data: ", NUM_TEST_EXAMPLES)
+
 
     print("\n############## Testing ##############\n")
 
     prediction_rows = rows[HEADLINE_AMOUNT:HEADLINE_AMOUNT + NUM_TEST_EXAMPLES]
     prediction_headlines = headlines_list[HEADLINE_AMOUNT:HEADLINE_AMOUNT + NUM_TEST_EXAMPLES]
 
-    X_predictions = predictor.get_and_clean_predictions(prediction_headlines)
-    Y_actual = predictor.get_stock_buy_sell(prediction_rows)
-
-    Y_predicted = predictor.predict(X_predictions)
+    X_predictions = RF_predictor.get_and_clean_predictions(prediction_headlines)
+    Y_actual = RF_predictor.get_stock_buy_sell(prediction_rows)
 
     print("\n############## Evaluation ##############\n")
 
-    print("Accuracy: ", accuracy_score(Y_predicted, Y_actual))
-    print("Precision: ", precision_score(Y_predicted, Y_actual))
-    print("Recall: ", recall_score(Y_predicted, Y_actual))
-    print("F Score: ", f1_score(Y_predicted, Y_actual))
+    RF_Y_predicted = RF_predictor.predict(X_predictions)
+    NB_Y_predicted = NB_predictor.predict(X_predictions)
+    SVM_Y_predicted = SVM_predictor.predict(X_predictions)
+
+    print("Random Forest:")
+    print("Accuracy: ", accuracy_score(RF_Y_predicted, Y_actual))
+    print("Precision: ", precision_score(RF_Y_predicted, Y_actual, average="micro"))
+    print("Recall: ", recall_score(RF_Y_predicted, Y_actual, average="micro"))
+    print("F Score: ", f1_score(RF_Y_predicted, Y_actual, average="micro"))
+
+    print("Naive Bayes:")
+    print("Accuracy: ", accuracy_score(NB_Y_predicted, Y_actual))
+    print("Precision: ", precision_score(NB_Y_predicted, Y_actual, average="micro"))
+    print("Recall: ", recall_score(NB_Y_predicted, Y_actual, average="micro"))
+    print("F Score: ", f1_score(NB_Y_predicted, Y_actual, average="micro"))
+
+    print("SVM:")
+    print("Accuracy: ", accuracy_score(SVM_Y_predicted, Y_actual))
+    print("Precision: ", precision_score(SVM_Y_predicted, Y_actual, average="micro"))
+    print("Recall: ", recall_score(SVM_Y_predicted, Y_actual, average="micro"))
+    print("F Score: ", f1_score(SVM_Y_predicted, Y_actual, average="micro"))
