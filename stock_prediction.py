@@ -3,7 +3,8 @@ This file contains a class that is used to predict stock movements given news he
 
 Honor Code: I affirm I have carried out the Union College Honor Code
 """
-
+import numpy
+import numpy as np
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVC
@@ -57,6 +58,28 @@ def getClassFromPrice(open_price, close_price, plus_minus_range=0):
     else:
         return 1
 
+def getClassFromSentimentProbabilities(sentiment_probs):
+    """
+    Return the class corresponding to the open and closing prices
+
+    if plus_minus_range = 0, return 1 or 0 based on the opening/closing price
+
+    :param open_price: the open price of the day
+    :param close_price: the close price of the day
+    :param plus_minus_range: the range for holding
+    :return: 2, 1, or 0 depending on the values
+    """
+
+    max_value = max(sentiment_probs)
+    index = np.where(sentiment_probs==max_value)[0][0]
+
+    if index == 2:
+        return 2
+    elif index == 1:
+        return 1
+    else:
+        return 0
+
 
 class Predictor:
     def __init__(self, stock):
@@ -93,17 +116,54 @@ class Predictor:
         each headline in the given list i.e. [[0.5, 0.02, 0.7], ...]
         """
 
-        chunked_data = chunk_data(headlines, 200)
+        chunked_data = chunk_data(headlines, 5)
         X = []
 
         print("Extracting Sentiments from Articles")
-        for chunk in chunked_data:
+        for chunk in tqdm(chunked_data, desc="Headline Chunk"):
             scores = self.get_sentiment_scores(chunk)
 
-            for sentiment_score in tqdm(scores, desc="Sentiments in Chunk"):
+            for sentiment_score in scores:
                 X.append(sentiment_score.cpu().detach().numpy())
 
         return X
+
+    def get_and_clean_dated_predictions(self, rows):
+        """
+        Given a list of headlines, return the sentiment score as a Python List
+        ^--- Will almost always want to use this method over get_predictions
+        :param headlines: a list of headlines
+        :return: a list of sentiments (positive, negative, neutral) corresponding to
+        each headline in the given list i.e. [[0.5, 0.02, 0.7], ...]
+        """
+
+        chunked_data = chunk_data(rows, 5)
+        X = {}
+
+        print("Extracting Sentiments from Articles")
+        for chunk in tqdm(chunked_data, desc="Headline Chunk"):
+            headlines_list = [row[CSV_COLUMNS["HEADLINE"]] for row in chunk]
+
+            scores = self.get_sentiment_scores(headlines_list)
+
+            for i, sentiment_score in enumerate(scores):
+                date_index = int(chunk[i][CSV_COLUMNS["DATE"]].split(" ")[0].replace("-", ""))
+                if date_index not in X.keys():
+                    X[date_index] = [sentiment_score.cpu().detach().numpy()]
+                X[date_index].append(sentiment_score.cpu().detach().numpy())
+
+        for date in X.keys():
+            summated_sentiment = np.array([])
+            for sentiment in X[date]:
+                if len(summated_sentiment) == 0:
+                    summated_sentiment = sentiment
+                summated_sentiment += sentiment
+
+            X[date] = getClassFromSentimentProbabilities(np.divide(summated_sentiment, 3))
+
+        print(X.items())
+
+        return list(X.items())
 
     def get_stock_buy_sell(self, rows):
         """
@@ -121,6 +181,23 @@ class Predictor:
             Y_actual.append(getClassFromPrice(price[0], price[1]))
 
         return Y_actual
+
+    def get_day_buy_sell(self, rows):
+        """
+        Given a list of rows containing headline, date, url, etc.
+        return a list containing 1 if the stock rose on the given date in the list
+                or 0 if the stock price fell on that date
+        :param rows: the rows from a CSV file (given from scripts.get_rows_from_ticker())
+        :return: list of values detailing stock price rising/falling i.e. [1, 1, 0, 0, 0, 1, 1, ...]
+        """
+        Y_actual = {}
+
+        for row in tqdm(rows, desc="Parsing Historical Data"):
+            date = row[CSV_COLUMNS['DATE']].split(" ")[0]
+            if date not in Y_actual.keys():
+                Y_actual[ int(date.replace("-", ""))] = getClassFromPrice(*self.stock.get_price_on_date(date))
+
+        return list(Y_actual.items())
 
     def train(self, X, Y, model):
         """
@@ -141,6 +218,13 @@ class Predictor:
         """
         return self.clf.predict(X)
 
+    def evaluate(self, predicted, actual):
+        print("\n############## Evaluation ##############\n")
+
+        print("Accuracy: ", accuracy_score(predicted, actual) * 100)
+        print("Precision: ", precision_score(predicted, actual) * 100)
+        print("Recall: ", recall_score(predicted, actual) * 100)
+        print("F Score: ", f1_score(predicted, actual) * 100)
 
 if __name__ == "__main__":
     # PREDICTOR CONFIGURATION ###############################################################
@@ -148,7 +232,7 @@ if __name__ == "__main__":
     CSV_FILE = "raw_analyst_ratings.csv"
 
     # Change company here
-    ticker = "GOOGL"
+    ticker = "NVDA"
 
     print("\n############## Preparing Data ##############\n")
 
@@ -159,10 +243,11 @@ if __name__ == "__main__":
     stock = StockPrices(ticker, min_date, max_date)
 
     print("Extracting Stock Headlines from Corpus")
+
     headlines_list = [row[CSV_COLUMNS["HEADLINE"]] for row in rows]
 
     # Number of training examples
-    HEADLINE_AMOUNT = round(len(headlines_list) * 0.7)
+    HEADLINE_AMOUNT = round(len(headlines_list) * 0.8)
 
     predictor = Predictor(stock)
 
@@ -172,7 +257,7 @@ if __name__ == "__main__":
     Y = predictor.get_stock_buy_sell(rows[:HEADLINE_AMOUNT])
 
     # Change Model Here
-    predictor.train(X, Y, GaussianNB())
+    predictor.train(X, Y, SVC())
 
     #####
     # Predict
@@ -191,9 +276,4 @@ if __name__ == "__main__":
 
     Y_predicted = predictor.predict(X_predictions)
 
-    print("\n############## Evaluation ##############\n")
-
-    print("Accuracy: ", accuracy_score(Y_predicted, Y_actual))
-    print("Precision: ", precision_score(Y_predicted, Y_actual))
-    print("Recall: ", recall_score(Y_predicted, Y_actual))
-    print("F Score: ", f1_score(Y_predicted, Y_actual))
+    predictor.evaluate(Y_predicted, Y_actual)

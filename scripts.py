@@ -8,32 +8,40 @@ from stock_price import StockPrices
 from constants import CSV_COLUMNS
 
 
-def find_stock_most_headlines(file):
-    """
-    Find the stock with the most headlines in the given CSV
-    :param file: the name of the CSV file to search
-    :return: tuple containing the ticker and the number of articles i.e. (GOOGL, 1597)
-    """
+def get_stocks_and_headlines(file):
     stocks = {}
 
     with open(file, newline='', encoding="utf8") as csvfile:
         reader = csv.reader(csvfile, delimiter=',')
         for row in reader:
             ticker = row[-1]
+
             if ticker in stocks:
-                stocks[ticker] += 1
+                stocks[ticker].append("HEADLINE")
             else:
-                stocks[ticker] = 1
+                stocks[ticker] = [row[CSV_COLUMNS["HEADLINE"]]]
+
+    return stocks
+
+
+def find_stock_most_headlines(file):
+    """
+    Find the stock with the most headlines in the given CSV
+    :param file: the name of the CSV file to search
+    :return: tuple containing the ticker and the number of articles i.e. (GOOGL, 1597)
+    """
+
+    stock_info = get_stocks_and_headlines(file)
 
     max_num_articles = float('-inf')
     max_ticker = None
 
-    for key in stocks:
-        num_articles = stocks[key]
+    for ticker in stock_info.keys():
+        num_articles = len(stock_info[ticker])
 
         if num_articles > max_num_articles:
             max_num_articles = num_articles
-            max_ticker = key
+            max_ticker = ticker
 
     return max_ticker, max_num_articles
 
